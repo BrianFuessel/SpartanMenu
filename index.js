@@ -1,3 +1,5 @@
+console.log("Starting program @ " + new Date().getHours() + " hours.")
+
 //Required libraries
 var Alexa = require('alexa-sdk');
 var Feed = require('dans-rss-to-json');
@@ -15,6 +17,19 @@ var servingLineIndexes =
     'riverwalk': 0, // Riverwalk
     'shaw':      2, // Shaw
     'wilson':    3, // Wilson
+};
+var cafeLocations = 
+{
+    'akers':     '908 Akers Road', // Akers
+    'brody':     '241 Brody Road', // Brody
+    'case' :     '842 Chestnut Road', // Case
+    'gallery':   '362 Bogue Street', // Snyder Phillips
+    'holden':    '234 Wilson Road', // Holden
+    'holmes':    '919 East Shaw Lane', // Holmes
+    'landon':    '632 West Circle Drive', // Landon
+    'riverwalk': 'McDonell Hall at 817 East Shaw Lane', // Riverwalk
+    'shaw':      '591 North Shaw Lane', // Shaw
+    'wilson':    '219 Wilson Road', // Wilson
 };
 var htmlReplacements =
 {
@@ -66,7 +81,7 @@ function getFoodFromHtml(html)
     return foodItems;
 }
 
-getFoodItems("case", null, function(food){console.log(food);});
+//getFoodItems("case", null, function(food){console.log(food);});
 
 function getFoodItems(cafe, foodType, fn)
 {
@@ -128,7 +143,7 @@ function getFoodItems(cafe, foodType, fn)
 
 var handlers = {
     'LaunchRequest': function () {
-        var say = 'Welcome!';
+        var say = 'Welcome to the Spartan Menu application!';
         this.emit(':ask', say, 'try again');
     },
 
@@ -150,7 +165,7 @@ var handlers = {
             
             var date = new Date();
             var timeOfDay;
-            timeOfDay = date.getHours() - 5 + (date.getMinutes() / 100);//servers must be on a weird time zone, so -5 hrs from time lol
+            timeOfDay = date.getHours() + (date.getMinutes() / 100);//servers must be on a weird time zone, so -5 hrs from time lol
             foodType = getFoodType();
 
             getFoodItems(myLocation, foodType, (foodItems) =>
@@ -161,7 +176,7 @@ var handlers = {
                 }
                 else
                 {
-                    say = 'Right now it is ' + foodType + ' time at ' + myLocation + ' and they are serving ' + 'some food'; //        need food stuff in this function
+                    say = 'Right now it is ' + foodType + ' time at ' + myLocation + ' and they are serving '; //        need food stuff in this function
                     for(var item in foodItems)
                     {
                         say = say + foodItems[item] + ', '
@@ -200,49 +215,23 @@ var handlers = {
             this.emit(':ask', say, 'try again');
         }
     },
-
-    'WhereIntent': function() {
-        var myLocation = this.event.request.intent.slots.Locations.value;
+    'WhereIntent': function() 
+    {
+        var myLocation = this.event.request.intent.slots.Locations.value.toLocaleLowerCase();
         var say = '';
-        if (myLocation === undefined){
+        if (myLocation === undefined)
+        {
             say = 'Dorm halls that have food include: Brody, Akers, Holmes, Riverwalk, Shaw, Snyder-Phillips, Landon, Case, Holden, Wilson.';
             this.emit(':ask', say, 'try again');
         }
-        else if (myLocation !== undefined){
-            if (myLocation == 'holden'){
-                say = myLocation + ' is located at 234 Wilson Road'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'case'){
-                say = myLocation + ' is located at 842 Chestnut Road'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'wilson'){
-                say = myLocation + ' is located at 219 Wilson Road'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'shaw'){
-                say = myLocation + ' is located at 591 North Shaw Lane'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'landon'){
-                say = myLocation + ' is located at 632 West Circle Drive'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'snyder phillips' || myLocation == 'Snyder Phillips'){
-                say = myLocation + ' is located at 362 Bogue Street';
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'brody'){
-                say = myLocation + ' is located at 241 Brody Road'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'holmes'){
-                say = myLocation + ' is located at 919 East Shaw Lane'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'riverwalk'){
-                say = myLocation + ' is located at McDonell Hall at 817 East Shaw Lane'; 
-                this.emit(':ask', say, 'try again');}
-            if (myLocation == 'akers'){
-                say = myLocation + ' is located at 908 Akers Road'; 
-                this.emit(':ask', say, 'try again');}
+        else if (myLocation !== undefined)
+        {
+            this.emit(":ask", myLocation + "is located at " + cafeLocations[myLocation], "try again");
         }
     },
  
-    'MyNameIsIntent': function() {
+    'MyNameIsIntent': function() 
+    {
 
         var myName = this.event.request.intent.slots.myName.value;
         var say = "";
@@ -257,7 +246,8 @@ var handlers = {
 
         this.emit(':ask', say, 'try again');
     },
-    'RecapIntent': function() {
+    'RecapIntent': function() 
+    {
 
         // create and store session attributes
         if (!this.attributes['myList']) {
@@ -272,14 +262,17 @@ var handlers = {
         this.emit(':ask', say, 'try again');
     },
 
-    'AMAZON.HelpIntent': function () {
+    'AMAZON.HelpIntent': function () 
+    {
         this.emit(':ask', 'Say the name of a dining hall and, optionally, for what meal you want to eat.', 'try again');
     },
 
-    'AMAZON.StopIntent': function () {
+    'AMAZON.StopIntent': function () 
+    {
         var say = '';
         var myName = '';
-        if (this.attributes['myName'] ) {
+        if (this.attributes['myName'] ) 
+        {
             myName = this.attributes['myName'];
         }
         say = 'Goodbye, ' + myName;
@@ -288,7 +281,8 @@ var handlers = {
     }
 }
 
-exports.handler = function(event, context, callback){
+exports.handler = function(event, context, callback)
+{
 
     var alexa = Alexa.handler(event, context);
     // alexa.appId = "amzn1.echo-sdk-ams.app.8c97fc78-342a-4e4f-823b-e2f91e7f3474";
