@@ -1,11 +1,10 @@
-console.log("Starting program @ " + new Date().getHours() + " hours.")
-
+const timeOffset = 12;
 //Required libraries
-var Alexa = require('alexa-sdk');
-var Feed = require('dans-rss-to-json');
+const Alexa = require('alexa-sdk');
+const Feed = require('dans-rss-to-json');
 
 //Variables
-var servingLineIndexes =
+const servingLineIndexes =
 {
     'akers':     0, // Akers
     'brody':     5, // Brody
@@ -18,7 +17,7 @@ var servingLineIndexes =
     'shaw':      2, // Shaw
     'wilson':    3, // Wilson
 };
-var cafeLocations = 
+const cafeLocations = 
 {
     'akers':     '908 Akers Road', // Akers
     'brody':     '241 Brody Road', // Brody
@@ -31,16 +30,21 @@ var cafeLocations =
     'shaw':      '591 North Shaw Lane', // Shaw
     'wilson':    '219 Wilson Road', // Wilson
 };
-var htmlReplacements =
+const htmlReplacements =
 {
     '&#039;': "'",
 }
-var Rgx = new RegExp('"> [-]?([A-Za-z ]+)</')
+const Rgx = new RegExp('"> [-]?([A-Za-z ]+)</')
+
+function getTime()
+{
+    var date = new Date();
+    return (date.getHours() + timeOffset + (date.getMinutes() / 100)) % 25;
+}
 
 function getFoodType()
 {
-    var date = new Date();
-    var timeOfDay = date.getHours() + (date.getMinutes() / 100);
+    var timeOfDay = getTime();
     if(timeOfDay >= 0)
     {
         if(timeOfDay <= 10.30)
@@ -81,6 +85,7 @@ function getFoodFromHtml(html)
     return foodItems;
 }
 
+console.log("Starting program @ " + getTime() + " hours.");
 //getFoodItems("case", null, function(food){console.log(food);});
 
 function getFoodItems(cafe, foodType, fn)
@@ -92,15 +97,10 @@ function getFoodItems(cafe, foodType, fn)
         
         console.log(rss["title"] + " - " + rss["description"]); //SOUTH POINTE DINING - Case Dining Menus for current day.
         console.log("Food type: " + foodType);
-        console.log("");
-        
+        console.log("");      
 
         var htmlDescription = rss.items[servingLineIndexes[cafe]].description;
-
-        //console.log(".description eq");
-        //console.log(htmlDescription);
-
-        
+ 
         //Cut off irrelevant html data
         switch(foodType)
         {
@@ -142,30 +142,32 @@ function getFoodItems(cafe, foodType, fn)
 }
 
 var handlers = {
-    'LaunchRequest': function () {
+    'LaunchRequest': function () 
+    {
         var say = 'Welcome to the Spartan Menu application!';
         this.emit(':ask', say, 'try again');
     },
-
-    'Unhandled': function () {
+    'Unhandled': function () 
+    {
         this.emit(':ask', `I\'m sorry, but I\'m not sure what you asked me.`);
     },
-
-    'GetMenuItem': function() {
+    'GetMenuItem': function() 
+    {
         var foodType = this.event.request.intent.slots.Meals.value;
         var myLocation = this.event.request.intent.slots.Locations.value;
         var say = '';
 
         myLocation = myLocation.toLocaleLowerCase();
         
-        if (foodType === undefined && myLocation !== undefined){ 
-            //no specific time given, but location given then assume user means right now
-            //compare current time to times for meals
-            // breakfast 07:00 - 10:30, lunch 10:31-15:30, dinner 15:31-21:00, late night 20:00-24:00, if between 24:00-7:00 return no meals at this time
+        if (foodType === undefined && myLocation !== undefined)
+        { 
+            /*
+                ** no specific time given, but location given then assume user means right now
+                ** compare current time to times for meals
+                ** breakfast 07:00 - 10:30, lunch 10:31-15:30, dinner 15:31-21:00, late night 20:00-24:00, if between 24:00-7:00 return no meals at this time
+            */
             
-            var date = new Date();
-            var timeOfDay;
-            timeOfDay = date.getHours() + (date.getMinutes() / 100);//servers must be on a weird time zone, so -5 hrs from time lol
+            var timeOfDay = getTime();
             foodType = getFoodType();
 
             getFoodItems(myLocation, foodType, (foodItems) =>
@@ -176,7 +178,7 @@ var handlers = {
                 }
                 else
                 {
-                    say = 'Right now it is ' + foodType + ' time at ' + myLocation + ' and they are serving '; //        need food stuff in this function
+                    say = 'Right now it is ' + foodType + ' time at ' + myLocation + ' and they are serving ';
                     for(var item in foodItems)
                     {
                         say = say + foodItems[item] + ', '
@@ -186,7 +188,6 @@ var handlers = {
                 this.emit(':ask', say, 'try again');
             });
         }
-        
         else if (foodType !== undefined && myLocation !== undefined)
         {
             getFoodItems(myLocation, foodType, (foodItems) =>
@@ -229,16 +230,19 @@ var handlers = {
             this.emit(":ask", myLocation + "is located at " + cafeLocations[myLocation], "try again");
         }
     },
- 
     'MyNameIsIntent': function() 
     {
 
         var myName = this.event.request.intent.slots.myName.value;
         var say = "";
 
-        if (myName == null) { // no slot
+        if (myName == null) 
+        { 
+            // no slot
             say = 'You can tell me your name, for example, you can say my name is Natasha.';
-        } else {
+        } 
+        else 
+        {
             // create and store session attributes
             this.attributes['myName'] = myName;
             say = 'Hi ' + myName + '!';
@@ -250,7 +254,8 @@ var handlers = {
     {
 
         // create and store session attributes
-        if (!this.attributes['myList']) {
+        if (!this.attributes['myList']) 
+        {
             this.attributes['myList'] = [];  // empty array
         }
 
@@ -261,17 +266,15 @@ var handlers = {
 
         this.emit(':ask', say, 'try again');
     },
-
     'AMAZON.HelpIntent': function () 
     {
         this.emit(':ask', 'Say the name of a dining hall and, optionally, for what meal you want to eat.', 'try again');
     },
-
     'AMAZON.StopIntent': function () 
     {
         var say = '';
         var myName = '';
-        if (this.attributes['myName'] ) 
+        if (this.attributes['myName']) 
         {
             myName = this.attributes['myName'];
         }
@@ -283,10 +286,8 @@ var handlers = {
 
 exports.handler = function(event, context, callback)
 {
-
     var alexa = Alexa.handler(event, context);
-    // alexa.appId = "amzn1.echo-sdk-ams.app.8c97fc78-342a-4e4f-823b-e2f91e7f3474";
+    //alexa.appId = "amzn1.echo-sdk-ams.app.8c97fc78-342a-4e4f-823b-e2f91e7f3474";
     alexa.registerHandlers(handlers);
     alexa.execute();
-
 };
