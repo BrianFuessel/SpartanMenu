@@ -1,9 +1,9 @@
-const timeOffset = 12;
 //Required libraries
 const Alexa = require('alexa-sdk');
 const Feed = require('dans-rss-to-json');
 
 //Variables
+const timeOffset = -5; //Account for time difference between Eastern Time & time on AWS servers
 const servingLineIndexes =
 {
     'akers':     0, // Akers
@@ -39,7 +39,9 @@ const Rgx = new RegExp('"> [-]?([A-Za-z ]+)</')
 function getTime()
 {
     var date = new Date();
-    return (date.getHours() + timeOffset + (date.getMinutes() / 100)) % 25;
+    var utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+    date = new Date(utc + (3600000 * timeOffset));
+    return (date.getHours() + (date.getMinutes() / 100)) % 25;
 }
 
 function getFoodType()
